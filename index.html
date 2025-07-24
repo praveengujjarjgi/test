@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Faculty ID QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background-color: #eef2f3;
+      padding: 30px;
+    }
+
+    h2 {
+      color: #222;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 15px;
+      color: #555;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 350px;
+      margin: 20px auto;
+      display: none;
+      border: 2px solid #007BFF;
+      border-radius: 10px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #007BFF;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Faculty QR Code Scanner</h2>
+  <p>Click the button below and scan the Faculty ID QR Code</p>
+  <button id="startScanBtn">Start QR Scan</button>
+  <div id="reader"></div>
+  <div id="status">Waiting to scan...</div>
+
+  <script>
+    const sheetURL = 'https://script.google.com/macros/s/AKfycbxYOzQD5hseOMVP_xoW_RYtHfEKKN6OLX43ruRCJQr3MX0u9iJSApJ55eROXmU0dhAZ/exec'; // ✅ Replace with your script if needed
+    const html5QrCode = new Html5Qrcode("reader");
+
+    function sendToSheets(data) {
+      fetch(sheetURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: data
+      })
+      .then(response => response.text())
+      .then(result => {
+        document.getElementById('status').textContent = '✅ Data submitted successfully!';
+        setTimeout(() => location.reload(), 2500);
+      })
+      .catch(error => {
+        document.getElementById('status').textContent = '❌ Error sending data.';
+        console.error('Error:', error);
+      });
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById('status').textContent = '📄 Scanned Data: ' + decodedText;
+      html5QrCode.stop().then(() => {
+        sendToSheets(decodedText);
+      }).catch(err => {
+        document.getElementById('status').textContent = '❌ Failed to stop camera.';
+        console.error('Stop error:', err);
+      });
+    }
+
+    document.getElementById("startScanBtn").addEventListener("click", () => {
+      document.getElementById("reader").style.display = "block";
+      document.getElementById('status').textContent = '📷 Starting camera...';
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        errorMessage => { /* Ignore scan errors */ }
+      ).catch(err => {
+        document.getElementById('status').textContent = '❌ Unable to access camera: ' + err;
+        console.error('Camera error:', err);
+      });
+    });
+  </script>
+
+</body>
+</html>
